@@ -10,6 +10,7 @@ function Login() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [orgName, setOrgName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,13 +37,14 @@ function Login() {
     try {
       // Admin login - no approval needed
       if (selectedRole === "admin") {
-        if (!email) {
-          alert("Please enter admin email");
+        if (!email || !password) {
+          alert("Please enter admin email and password");
           setIsLoading(false);
           return;
         }
         const response = await userAPI.login({
           email,
+          password,
           role: getRoleEnum("admin"),
         });
         const { token, user } = response.data;
@@ -59,14 +61,15 @@ function Login() {
 
       // Analyst login - no approval needed (read-only access)
       if (selectedRole === "analyst") {
-        if (!name || !email) {
-          alert("Please enter name and email");
+        if (!name || !email || !password) {
+          alert("Please enter name, email and password");
           setIsLoading(false);
           return;
         }
         const response = await userAPI.login({
           name,
           email,
+          password,
           role: getRoleEnum("analyst"),
         });
         const { token, user } = response.data;
@@ -84,14 +87,15 @@ function Login() {
 
       // Donor login
       if (selectedRole === "giver") {
-        if (!name || !phone) {
-          alert("Please enter name and phone number");
+        if (!name || !phone || !password) {
+          alert("Please enter name, phone number and password");
           setIsLoading(false);
           return;
         }
         const response = await userAPI.login({
           name,
           phone,
+          password,
           role: getRoleEnum("giver"),
         });
         const { token, user } = response.data;
@@ -116,14 +120,15 @@ function Login() {
 
       // Finder (Receiver) login - auto approved but requires name & phone
       if (selectedRole === "finder") {
-        if (!name || !phone) {
-          alert("Please enter your name and phone number");
+        if (!name || !phone || !password) {
+          alert("Please enter your name, phone number and password");
           setIsLoading(false);
           return;
         }
         const response = await userAPI.login({
           name,
           phone,
+          password,
           role: getRoleEnum("finder"),
         });
         const { token, user } = response.data;
@@ -141,14 +146,15 @@ function Login() {
 
       // Organization login
       if (selectedRole === "organization") {
-        if (!orgName || !email) {
-          alert("Please enter organization name and email");
+        if (!orgName || !email || !password) {
+          alert("Please enter organization name, email and password");
           setIsLoading(false);
           return;
         }
         const response = await userAPI.login({
           name: orgName,
           email,
+          password,
           role: getRoleEnum("organization"),
         });
         const { token, user } = response.data;
@@ -251,6 +257,16 @@ function Login() {
                 required
               />
             </div>
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
           </div>
         )}
 
@@ -274,6 +290,16 @@ function Login() {
                 placeholder="Enter phone number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Password *</label>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
@@ -306,6 +332,16 @@ function Login() {
                 required
               />
             </div>
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
           </div>
         )}
 
@@ -332,6 +368,16 @@ function Login() {
                 required
               />
             </div>
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
           </div>
         )}
 
@@ -345,6 +391,16 @@ function Login() {
                 placeholder="Enter admin email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>

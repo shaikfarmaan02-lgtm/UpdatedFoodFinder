@@ -10,6 +10,7 @@ function Register() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
     phone: "",
     orgName: "",
     orgType: "",
@@ -42,20 +43,20 @@ function Register() {
 
     // Validate based on role
     if (selectedRole === "giver") {
-      if (!formData.name || !formData.phone || !formData.email || !formData.address) {
+      if (!formData.name || !formData.phone || !formData.email || !formData.address || !formData.password) {
         alert("Please fill in all required fields");
         setIsSubmitting(false);
         return;
       }
     } else if (selectedRole === "organization") {
-      if (!formData.orgName || !formData.email || !formData.phone || !formData.address) {
+      if (!formData.orgName || !formData.email || !formData.phone || !formData.address || !formData.password) {
         alert("Please fill in all required fields");
         setIsSubmitting(false);
         return;
       }
     } else if (selectedRole === "finder") {
-      if (!formData.name) {
-        alert("Please enter your name");
+      if (!formData.name || !formData.password) {
+        alert("Please enter your name and password");
         setIsSubmitting(false);
         return;
       }
@@ -68,7 +69,9 @@ function Register() {
       // Prepare registration data
       const userData = {
         role: backendRole,
+        name: "",
         email: formData.email || `${formData.name.toLowerCase().replace(/\s/g, "")}@user.com`,
+        password: formData.password,
         phone: formData.phone,
         address: formData.address,
       };
@@ -172,6 +175,17 @@ function Register() {
               />
             </div>
             <div className="form-group">
+              <label>Password *</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Enter password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
               <label>Phone Number *</label>
               <input
                 type="tel"
@@ -240,6 +254,17 @@ function Register() {
               />
             </div>
             <div className="form-group">
+              <label>Password *</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Enter password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
               <label>Contact Number *</label>
               <input
                 type="tel"
@@ -277,6 +302,17 @@ function Register() {
                 name="name"
                 placeholder="Enter your name"
                 value={formData.name}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Password *</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Enter password"
+                value={formData.password}
                 onChange={handleInputChange}
                 required
               />
