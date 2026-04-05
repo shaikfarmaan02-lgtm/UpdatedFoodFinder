@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { userAPI } from "../services/api";
 import "../styles/auth.css";
 
 function Register() {
@@ -21,20 +22,7 @@ function Register() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Get registered users from localStorage
-  const getRegisteredUsers = () => {
-    const saved = localStorage.getItem("registeredUsers");
-    return saved ? JSON.parse(saved) : [];
-  };
-
-  // Save user to registered users list
-  const saveUser = (user) => {
-    const users = getRegisteredUsers();
-    users.push(user);
-    localStorage.setItem("registeredUsers", JSON.stringify(users));
-  };
-
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!selectedRole) {
       alert("Please select a role");
       return;
@@ -63,35 +51,45 @@ function Register() {
       }
     }
 
-    // Create user object
-    const newUser = {
-      id: Date.now(),
-      role: selectedRole,
-      name: selectedRole === "organization" ? formData.orgName : formData.name,
-      email: formData.email || `${formData.name.toLowerCase().replace(/\s/g, "")}@user.com`,
-      phone: formData.phone,
-      orgType: formData.orgType,
-      address: formData.address,
-      // Donor & Organization need approval, Receiver (finder) is auto-approved
-      approvalStatus: selectedRole === "finder" ? "APPROVED" : "PENDING_APPROVAL",
-      joinedDate: new Date().toISOString().split("T")[0],
-    };
+    try {
+      // Prepare registration data
+      const userData = {
+        role: selectedRole,
+        email: formData.email || `${formData.name.toLowerCase().replace(/\s/g, "")}@user.com`,
+        phone: formData.phone,
+        address: formData.address,
+      };
 
-    // Save to registered users
-    saveUser(newUser);
+      // Add role-specific fields
+      if (selectedRole === "organization") {
+        userData.name = formData.orgName;
+        userData.orgType = formData.orgType;
+      } else {
+        userData.name = formData.name;
+      }
 
-    // Show appropriate message based on role
-    if (selectedRole === "finder") {
-      alert("Registration successful! You can now login.");
-      navigate("/login");
-    } else {
+      // Call registration API
+      const response = await userAPI.register(userData);
+      
+      // Show appropriate message based on role
+      if (selectedRole === "finder") {
+        alert("Registration successful! You can now login.");
+        navigate("/login");
+      } else {
+        alert(
+          `Registration submitted successfully!\n\nYour account is pending admin approval.\nYou'll be notified once approved.`
+        );
+        navigate("/login");
+      }
+    } catch (error) {
       alert(
-        `Registration submitted successfully!\n\nYour account is pending admin approval.\nYou'll be notified once approved.`
+        "Registration failed: " +
+          (error.response?.data?.message || error.message)
       );
-      navigate("/login");
+      console.error("Registration error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   return (

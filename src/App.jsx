@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { foodAPI } from "./services/api";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -21,23 +22,9 @@ import PendingApproval from "./pages/PendingApproval";
 import Unauthorized from "./pages/Unauthorized";
 
 function App() {
-  /* ================= FOOD LIST (PERSISTENT) ================= */
-  const [foodList, setFoodList] = useState(() => {
-    const savedFood = localStorage.getItem("foodList");
-    if (!savedFood) return [];
-    
-    const parsed = JSON.parse(savedFood);
-    // Remove duplicates based on foodName, location, expiryTime, and giverName
-    const uniqueFoods = parsed.filter((food, index, self) =>
-      index === self.findIndex((f) =>
-        f.foodName === food.foodName &&
-        f.location === food.location &&
-        f.expiryTime === food.expiryTime &&
-        f.giverName === food.giverName
-      )
-    );
-    return uniqueFoods;
-  });
+  /* ================= FOOD LIST (FROM API) ================= */
+  const [foodList, setFoodList] = useState([]);
+  const [isLoadingFoods, setIsLoadingFoods] = useState(true);
 
   /* ================= ROLE STATE ================= */
   const [role, setRole] = useState(() => {
@@ -48,10 +35,24 @@ function App() {
     return localStorage.getItem("approvalStatus");
   });
 
-  /* ================= SAVE FOOD LIST ================= */
+  /* ================= LOAD FOODS FROM API ================= */
   useEffect(() => {
-    localStorage.setItem("foodList", JSON.stringify(foodList));
-  }, [foodList]);
+    const loadFoods = async () => {
+      try {
+        setIsLoadingFoods(true);
+        const response = await foodAPI.getAll();
+        setFoodList(response.data);
+      } catch (error) {
+        console.error("Failed to load foods:", error);
+        // Fallback to empty list if API fails
+        setFoodList([]);
+      } finally {
+        setIsLoadingFoods(false);
+      }
+    };
+
+    loadFoods();
+  }, []);
 
   /* ================= AUTO-DELETE EXPIRED FOOD ================= */
   useEffect(() => {
@@ -92,21 +93,33 @@ function App() {
   }, []);
 
   /* ================= DELETE FOOD (GIVER) ================= */
-  const deleteFood = (id) => {
-    setFoodList((prev) =>
-      prev.filter((food) => food.id !== id)
-    );
+  const deleteFood = async (id) => {
+    try {
+      await foodAPI.delete(id);
+      setFoodList((prev) =>
+        prev.filter((food) => food.id !== id)
+      );
+    } catch (error) {
+      console.error("Failed to delete food:", error);
+      alert("Failed to delete food item");
+    }
   };
 
   /* ================= MARK AS COLLECTED (GIVER) ================= */
-  const markAsCollected = (id) => {
-    setFoodList((prev) =>
-      prev.map((food) =>
-        food.id === id
-          ? { ...food, status: "collected" }
-          : food
-      )
-    );
+  const markAsCollected = async (id) => {
+    try {
+      await foodAPI.update(id, { status: "collected" });
+      setFoodList((prev) =>
+        prev.map((food) =>
+          food.id === id
+            ? { ...food, status: "collected" }
+            : food
+        )
+      );
+    } catch (error) {
+      console.error("Failed to mark as collected:", error);
+      alert("Failed to update food status");
+    }
   };
 
   return (

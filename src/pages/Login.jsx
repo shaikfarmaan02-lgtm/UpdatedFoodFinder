@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { userAPI } from "../services/api";
 import "../styles/auth.css";
 
 function Login() {
@@ -10,141 +11,159 @@ function Login() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [orgName, setOrgName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Get registered users from localStorage
-  const getRegisteredUsers = () => {
-    const saved = localStorage.getItem("registeredUsers");
-    return saved ? JSON.parse(saved) : [];
-  };
-
-  // Find user by email/name and role
-  const findUser = (identifier, role) => {
-    const users = getRegisteredUsers();
-    return users.find(
-      (u) =>
-        u.role === role &&
-        (u.email?.toLowerCase() === identifier.toLowerCase() ||
-          u.name?.toLowerCase() === identifier.toLowerCase())
-    );
-  };
-
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!selectedRole) {
       alert("Please select a role");
       return;
     }
 
-    // Admin login - no approval needed
-    if (selectedRole === "admin") {
-      if (!email) {
-        alert("Please enter admin email");
-        return;
-      }
-      localStorage.setItem("role", "admin");
-      localStorage.setItem("adminEmail", email);
-      localStorage.setItem("approvalStatus", "APPROVED");
-      alert("Logged in as Admin");
-      window.dispatchEvent(new Event("storage"));
-      navigate("/admin");
-      return;
-    }
+    setIsLoading(true);
 
-    // Analyst login - no approval needed (read-only access)
-    if (selectedRole === "analyst") {
-      if (!name || !email) {
-        alert("Please enter name and email");
-        return;
-      }
-      localStorage.setItem("role", "analyst");
-      localStorage.setItem("analystName", name);
-      localStorage.setItem("analystEmail", email);
-      localStorage.setItem("approvalStatus", "APPROVED");
-      alert("Logged in as Data Analyst");
-      window.dispatchEvent(new Event("storage"));
-      navigate("/analytics");
-      return;
-    }
-
-    // Donor login
-    if (selectedRole === "giver") {
-      if (!name || !phone) {
-        alert("Please enter name and phone number");
+    try {
+      // Admin login - no approval needed
+      if (selectedRole === "admin") {
+        if (!email) {
+          alert("Please enter admin email");
+          setIsLoading(false);
+          return;
+        }
+        const response = await userAPI.login({
+          email,
+          role: "admin",
+        });
+        const { token, user } = response.data;
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("role", "admin");
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("adminEmail", email);
+        localStorage.setItem("approvalStatus", "APPROVED");
+        alert("Logged in as Admin");
+        window.dispatchEvent(new Event("storage"));
+        navigate("/admin");
         return;
       }
 
-      // Check if user exists and their approval status
-      const user = findUser(name, "giver");
-      
-      let approvalStatus = "APPROVED"; // Default for demo/existing users
-      
-      if (user) {
-        approvalStatus = user.approvalStatus || "APPROVED";
-      }
-
-      localStorage.setItem("role", "giver");
-      localStorage.setItem("giverName", name);
-      localStorage.setItem("giverContact", phone);
-      localStorage.setItem("giverAddress", user?.address || "");
-      localStorage.setItem("approvalStatus", approvalStatus);
-      localStorage.setItem("userEmail", user?.email || email);
-
-      window.dispatchEvent(new Event("storage"));
-
-      if (approvalStatus === "PENDING_APPROVAL") {
-        navigate("/pending-approval");
-      } else {
-        alert("Logged in as Food Donor");
-        navigate("/donor-dashboard");
-      }
-      return;
-    }
-
-    // Finder (Receiver) login - auto approved but requires name & phone
-    if (selectedRole === "finder") {
-      if (!name || !phone) {
-        alert("Please enter your name and phone number");
-        return;
-      }
-      localStorage.setItem("role", "finder");
-      localStorage.setItem("approvalStatus", "APPROVED");
-      localStorage.setItem("finderName", name);
-      localStorage.setItem("finderPhone", phone);
-      alert("Logged in as Food Finder");
-      window.dispatchEvent(new Event("storage"));
-      navigate("/find-food");
-      return;
-    }
-
-    // Organization login
-    if (selectedRole === "organization") {
-      if (!orgName || !email) {
-        alert("Please enter organization name and email");
+      // Analyst login - no approval needed (read-only access)
+      if (selectedRole === "analyst") {
+        if (!name || !email) {
+          alert("Please enter name and email");
+          setIsLoading(false);
+          return;
+        }
+        const response = await userAPI.login({
+          name,
+          email,
+          role: "analyst",
+        });
+        const { token, user } = response.data;
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("role", "analyst");
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("analystName", name);
+        localStorage.setItem("analystEmail", email);
+        localStorage.setItem("approvalStatus", "APPROVED");
+        alert("Logged in as Data Analyst");
+        window.dispatchEvent(new Event("storage"));
+        navigate("/analytics");
         return;
       }
 
-      // Check if user exists and their approval status
-      const user = findUser(orgName, "organization") || findUser(email, "organization");
-      
-      let approvalStatus = "APPROVED"; // Default for demo/existing users
-      
-      if (user) {
-        approvalStatus = user.approvalStatus || "APPROVED";
+      // Donor login
+      if (selectedRole === "giver") {
+        if (!name || !phone) {
+          alert("Please enter name and phone number");
+          setIsLoading(false);
+          return;
+        }
+        const response = await userAPI.login({
+          name,
+          phone,
+          role: "giver",
+        });
+        const { token, user } = response.data;
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("role", "giver");
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("giverName", name);
+        localStorage.setItem("giverContact", phone);
+        localStorage.setItem("giverAddress", user?.address || "");
+        localStorage.setItem("approvalStatus", user.approvalStatus || "APPROVED");
+        localStorage.setItem("userEmail", user?.email || email);
+        window.dispatchEvent(new Event("storage"));
+
+        if (user.approvalStatus === "PENDING_APPROVAL") {
+          navigate("/pending-approval");
+        } else {
+          alert("Logged in as Food Donor");
+          navigate("/donor-dashboard");
+        }
+        return;
       }
 
-      localStorage.setItem("role", "organization");
-      localStorage.setItem("orgName", orgName);
-      localStorage.setItem("orgEmail", email);
-      localStorage.setItem("approvalStatus", approvalStatus);
-
-      window.dispatchEvent(new Event("storage"));
-
-      if (approvalStatus === "PENDING_APPROVAL") {
-        navigate("/pending-approval");
-      } else {
-        alert("Logged in as Recipient Organization");
-        navigate("/organization-dashboard");
+      // Finder (Receiver) login - auto approved but requires name & phone
+      if (selectedRole === "finder") {
+        if (!name || !phone) {
+          alert("Please enter your name and phone number");
+          setIsLoading(false);
+          return;
+        }
+        const response = await userAPI.login({
+          name,
+          phone,
+          role: "finder",
+        });
+        const { token, user } = response.data;
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("role", "finder");
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("approvalStatus", "APPROVED");
+        localStorage.setItem("finderName", name);
+        localStorage.setItem("finderPhone", phone);
+        alert("Logged in as Food Finder");
+        window.dispatchEvent(new Event("storage"));
+        navigate("/find-food");
+        return;
       }
-      return;
+
+      // Organization login
+      if (selectedRole === "organization") {
+        if (!orgName || !email) {
+          alert("Please enter organization name and email");
+          setIsLoading(false);
+          return;
+        }
+        const response = await userAPI.login({
+          name: orgName,
+          email,
+          role: "organization",
+        });
+        const { token, user } = response.data;
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("role", "organization");
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("orgName", orgName);
+        localStorage.setItem("orgEmail", email);
+        localStorage.setItem("approvalStatus", user.approvalStatus || "APPROVED");
+        window.dispatchEvent(new Event("storage"));
+
+        if (user.approvalStatus === "PENDING_APPROVAL") {
+          navigate("/pending-approval");
+        } else {
+          alert("Logged in as Recipient Organization");
+          navigate("/organization-dashboard");
+        }
+        return;
+      }
+    } catch (error) {
+      alert(
+        "Login failed: " +
+          (error.response?.data?.message || error.message)
+      );
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -320,8 +339,8 @@ function Login() {
           </div>
         )}
 
-        <button className="login-btn" onClick={handleLogin}>
-          Login as {selectedRole ? selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1) : "..."}
+        <button className="login-btn" onClick={handleLogin} disabled={isLoading}>
+          {isLoading ? "Logging in..." : `Login as ${selectedRole ? selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1) : "..."}`}
         </button>
 
         <div className="auth-footer">

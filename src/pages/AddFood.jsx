@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { foodAPI } from "../services/api";
 import "../styles/addFood.css";
 
 function AddFood({ setFoodList }) {
@@ -7,6 +8,7 @@ function AddFood({ setFoodList }) {
   const [price, setPrice] = useState("");
   const [type, setType] = useState("");
   const [expiryTime, setExpiryTime] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const role = localStorage.getItem("role");
   const approvalStatus = localStorage.getItem("approvalStatus");
@@ -52,47 +54,50 @@ function AddFood({ setFoodList }) {
   // STEP B2: Add food with real coordinates
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    const coords = await getCoordinates(location);
-    if (!coords) return;
+    try {
+      const coords = await getCoordinates(location);
+      if (!coords) {
+        setIsSubmitting(false);
+        return;
+      }
 
-    // Generate a unique ID using timestamp + random string to prevent duplicates
-    const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const newFood = {
+        foodName,
+        location,
+        price: price === "0" || price === "" ? "Free" : `₹${price}`,
+        type,
+        latitude: coords.lat,
+        longitude: coords.lng,
+        expiryTime,
+        status: "available",
+        giverName: localStorage.getItem("giverName"),
+        giverContact: localStorage.getItem("giverContact"),
+      };
 
-    const newFood = {
-      id: uniqueId,
-      foodName,
-      location,
-      price: price === "0" ? "Free" : `₹${price}`,
-      type,
-      lat: coords.lat,
-      lng: coords.lng,
-      expiryTime,
-      status: "available",
-      giverName: localStorage.getItem("giverName"),
-      giverContact: localStorage.getItem("giverContact"),
-    };
+      // Call API to create food listing
+      const response = await foodAPI.create(newFood);
+      
+      // Add the created food to the list
+      setFoodList((prev) => [...prev, response.data]);
 
-    // Prevent duplicate additions by checking if this exact item already exists
-    setFoodList((prev) => {
-      const isDuplicate = prev.some(
-        (food) =>
-          food.foodName === newFood.foodName &&
-          food.location === newFood.location &&
-          food.expiryTime === newFood.expiryTime &&
-          food.giverName === newFood.giverName
+      alert("Food added successfully!");
+
+      setFoodName("");
+      setLocation("");
+      setPrice("");
+      setType("");
+      setExpiryTime("");
+    } catch (error) {
+      alert(
+        "Failed to add food: " +
+          (error.response?.data?.message || error.message)
       );
-      if (isDuplicate) return prev;
-      return [...prev, newFood];
-    });
-
-    alert("Food added successfully!");
-
-    setFoodName("");
-    setLocation("");
-    setPrice("");
-    setType("");
-    setExpiryTime("");
+      console.error("Add food error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -158,7 +163,9 @@ function AddFood({ setFoodList }) {
           />
         </div>
 
-        <button type="submit">Add Food</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Adding Food..." : "Add Food"}
+        </button>
       </form>
     </div>
   );

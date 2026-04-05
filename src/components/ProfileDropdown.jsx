@@ -106,6 +106,11 @@ function ProfileDropdown() {
   }, []);
 
   const handleLogout = () => {
+    // Clear auth token
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userId");
+    
+    // Clear user data
     localStorage.removeItem("role");
     localStorage.removeItem("approvalStatus");
     localStorage.removeItem("giverName");
@@ -118,6 +123,7 @@ function ProfileDropdown() {
     localStorage.removeItem("finderName");
     localStorage.removeItem("finderPhone");
     localStorage.removeItem("userEmail");
+    
     setUserData(null);
     setIsOpen(false);
     window.dispatchEvent(new Event("storage"));
