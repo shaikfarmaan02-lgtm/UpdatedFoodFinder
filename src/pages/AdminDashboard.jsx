@@ -16,32 +16,62 @@ function AdminDashboard({ foodList, setFoodList }) {
         setIsLoadingUsers(true);
         const response = await adminAPI.getAllUsers();
         
-        // DEBUG: Log the full response structure
-        console.log("📊 Full API Response:", response);
-        console.log("📊 Response Data:", response.data);
-        console.log("📊 Response Data.data:", response.data?.data);
+        // COMPREHENSIVE DEBUG LOGGING
+        console.log("========== ADMIN PANEL USER LOADING DEBUG ==========");
+        console.log("📊 Full response object:", response);
+        console.log("📊 response.data:", response.data);
+        console.log("📊 response.data.data:", response.data?.data);
+        console.log("📊 response.data.success:", response.data?.success);
+        console.log("📊 response.data.message:", response.data?.message);
         
         const allUsers = response.data?.data || [];
-        console.log("✅ Users loaded:", allUsers);
-        console.log("✅ Pending users count:", allUsers.filter(u => (u.approval_status || u.approvalStatus) === "PENDING_APPROVAL").length);
-        console.log("📋 Sample user structure:", allUsers[0]);
+        console.log("🔢 Total users count:", allUsers.length);
+        console.log("✅ Full users array:", JSON.stringify(allUsers, null, 2));
         
-        // DETAILED PROPERTY INSPECTION
-        if (allUsers.length > 0) {
+        if (!allUsers || allUsers.length === 0) {
+          console.warn("⚠️ NO USERS RETURNED FROM API!");
+          console.warn("Response structure:", Object.keys(response.data || {}));
+          setUsers([]);
+          showToast("No users returned from API", "warning");
+        } else {
+          // Inspect first user
           const firstUser = allUsers[0];
-          console.log("🔍 User object keys:", Object.keys(firstUser));
-          console.log("🔍 approval_status exists?", "approval_status" in firstUser);
-          console.log("🔍 approvalStatus exists?", "approvalStatus" in firstUser);
-          console.log("🔍 approval_status value:", firstUser.approval_status);
-          console.log("🔍 approvalStatus value:", firstUser.approvalStatus);
+          console.log("\n🔍 FIRST USER DETAILED INSPECTION:");
+          console.log("First user object:", firstUser);
+          console.log("User object keys:", Object.keys(firstUser));
+          console.log("approval_status:", firstUser.approval_status);
+          console.log("approvalStatus:", firstUser.approvalStatus);
+          
+          // Check for null/undefined in important fields
+          console.log("\n📋 FIELD CHECKS:");
+          console.log("id:", firstUser.id, "| type:", typeof firstUser.id);
+          console.log("name:", firstUser.name, "| type:", typeof firstUser.name);
+          console.log("email:", firstUser.email, "| type:", typeof firstUser.email);
+          console.log("role:", firstUser.role, "| type:", typeof firstUser.role);
+          console.log("status (approval_status||approvalStatus):", firstUser.approval_status || firstUser.approvalStatus);
+          
+          // Count users by status
+          const pendingCount = allUsers.filter(u => (u.approval_status || u.approvalStatus) === "PENDING_APPROVAL").length;
+          const approvedCount = allUsers.filter(u => (u.approval_status || u.approvalStatus) === "APPROVED").length;
+          const rejectedCount = allUsers.filter(u => (u.approval_status || u.approvalStatus) === "REJECTED").length;
+          
+          console.log("\n📊 USER STATUS COUNTS:");
+          console.log("Pending approvals:", pendingCount);
+          console.log("Approved:", approvedCount);
+          console.log("Rejected:", rejectedCount);
+          console.log("====================================================\n");
+          
+          setUsers(allUsers);
         }
-        
-        setUsers(allUsers);
       } catch (error) {
-        console.error("❌ Failed to load users:", error);
-        console.error("❌ Error details:", error.response?.data);
+        console.error("❌ FAILED TO LOAD USERS - ERROR DETAILS:");
+        console.error("Error message:", error.message);
+        console.error("Error object:", error);
+        console.error("Error response status:", error.response?.status);
+        console.error("Error response data:", error.response?.data);
+        console.error("Error config URL:", error.config?.url);
         setUsers([]);
-        showToast("Failed to load users", "error");
+        showToast("Failed to load users: " + (error.response?.data?.message || error.message), "error");
       } finally {
         setIsLoadingUsers(false);
       }
@@ -56,14 +86,20 @@ function AdminDashboard({ foodList, setFoodList }) {
     setTimeout(() => setToast(null), 3000);
   };
 
+  // Safe getter for approval status (handles both camelCase and snake_case)
+  const getApprovalStatus = (user) => {
+    const status = user?.approval_status || user?.approvalStatus;
+    return status || null;
+  };
+
   // Stats calculation
   const totalListings = foodList.length;
   const activeListings = foodList.filter(f => f.status === "available" && new Date(f.expiryTime) > new Date()).length;
   const collectedFood = foodList.filter(f => f.status === "collected").length;
   const expiredFood = foodList.filter(f => new Date(f.expiryTime) < new Date() && f.status !== "collected").length;
   const totalUsers = users.length;
-  const pendingApprovals = users.filter(u => (u.approval_status || u.approvalStatus) === "PENDING_APPROVAL").length;
-  const approvedUsers = users.filter(u => (u.approval_status || u.approvalStatus) === "APPROVED").length;
+  const pendingApprovals = users.filter(u => getApprovalStatus(u) === "PENDING_APPROVAL").length;
+  const approvedUsers = users.filter(u => getApprovalStatus(u) === "APPROVED").length;
 
   // Remove expired/invalid entries
   const removeExpiredListings = () => {
@@ -160,8 +196,8 @@ function AdminDashboard({ foodList, setFoodList }) {
 
   // Get pending users (defensive filter - check both property names)
   const pendingUsers = users.filter(u => {
-    const status = u.approval_status || u.approvalStatus;
-    console.log("🔍 User:", u.name, "| Status property:", status, "| Full user:", u);
+    const status = getApprovalStatus(u);
+    console.log("🔍 Filtering user:", u.name, "| Status:", status);
     return status === "PENDING_APPROVAL";
   });
 
@@ -224,11 +260,19 @@ function AdminDashboard({ foodList, setFoodList }) {
         border: "1px solid #ddd"
       }}>
         <div>📊 <strong>Users Loaded:</strong> {users.length}</div>
-        <div>⏳ <strong>Pending:</strong> {users.filter(u => (u.approval_status || u.approvalStatus) === "PENDING_APPROVAL").length}</div>
-        <div>✅ <strong>Approved:</strong> {users.filter(u => (u.approval_status || u.approvalStatus) === "APPROVED").length}</div>
-        <div>❌ <strong>Rejected:</strong> {users.filter(u => (u.approval_status || u.approvalStatus) === "REJECTED").length}</div>
+        <div>⏳ <strong>Pending:</strong> {users.filter(u => getApprovalStatus(u) === "PENDING_APPROVAL").length}</div>
+        <div>✅ <strong>Approved:</strong> {users.filter(u => getApprovalStatus(u) === "APPROVED").length}</div>
+        <div>❌ <strong>Rejected:</strong> {users.filter(u => getApprovalStatus(u) === "REJECTED").length}</div>
+        <div style={{marginTop: "8px", color: "#000", fontWeight: "bold"}}>
+          🔴 NULL STATUS COUNT: {users.filter(u => getApprovalStatus(u) === null).length}
+        </div>
+        {users.length > 0 && (
+          <div style={{marginTop: "8px", padding: "8px", backgroundColor: "#fff", borderRadius: "4px"}}>
+            <strong>First User:</strong> {users[0].name} | Email: {users[0].email} | Status: {getApprovalStatus(users[0]) || "⚠️ NULL"}
+          </div>
+        )}
         <div style={{marginTop: "8px", color: "#666"}}>
-          Check browser console (F12) for detailed API response logs
+          ℹ️ Open browser console (F12) for complete API response details
         </div>
       </div>
 
@@ -500,12 +544,17 @@ function AdminDashboard({ foodList, setFoodList }) {
                     <td><span className={`role-badge ${user.role}`}>{user.role}</span></td>
                     <td>{user.joinedDate}</td>
                     <td>
-                      <span className={`status-badge ${getStatusClass(user.approval_status || user.approvalStatus)}`}>
-                        {formatStatus(user.approval_status || user.approvalStatus)}
-                      </span>
+                      {(() => {
+                        const status = getApprovalStatus(user);
+                        return (
+                          <span className={`status-badge ${getStatusClass(status)}`}>
+                            {formatStatus(status) || "⚠️ NULL"}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="action-cell">
-                      {(user.approval_status || user.approvalStatus) === "PENDING_APPROVAL" && (
+                      {getApprovalStatus(user) === "PENDING_APPROVAL" && (
                         <>
                           <button 
                             className="table-btn success"
@@ -521,7 +570,7 @@ function AdminDashboard({ foodList, setFoodList }) {
                           </button>
                         </>
                       )}
-                      {(user.approval_status || user.approvalStatus) === "APPROVED" && (
+                      {getApprovalStatus(user) === "APPROVED" && (
                         <button 
                           className="table-btn warning"
                           onClick={() => toggleUserStatus(user.id)}
@@ -529,7 +578,7 @@ function AdminDashboard({ foodList, setFoodList }) {
                           Suspend
                         </button>
                       )}
-                      {(user.approval_status || user.approvalStatus) === "SUSPENDED" && (
+                      {getApprovalStatus(user) === "SUSPENDED" && (
                         <button 
                           className="table-btn success"
                           onClick={() => toggleUserStatus(user.id)}
