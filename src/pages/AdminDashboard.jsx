@@ -23,7 +23,18 @@ function AdminDashboard({ foodList, setFoodList }) {
         
         const allUsers = response.data?.data || [];
         console.log("✅ Users loaded:", allUsers);
-        console.log("✅ Pending users count:", allUsers.filter(u => u.approval_status === "PENDING_APPROVAL").length);
+        console.log("✅ Pending users count:", allUsers.filter(u => (u.approval_status || u.approvalStatus) === "PENDING_APPROVAL").length);
+        console.log("📋 Sample user structure:", allUsers[0]);
+        
+        // DETAILED PROPERTY INSPECTION
+        if (allUsers.length > 0) {
+          const firstUser = allUsers[0];
+          console.log("🔍 User object keys:", Object.keys(firstUser));
+          console.log("🔍 approval_status exists?", "approval_status" in firstUser);
+          console.log("🔍 approvalStatus exists?", "approvalStatus" in firstUser);
+          console.log("🔍 approval_status value:", firstUser.approval_status);
+          console.log("🔍 approvalStatus value:", firstUser.approvalStatus);
+        }
         
         setUsers(allUsers);
       } catch (error) {
@@ -51,8 +62,8 @@ function AdminDashboard({ foodList, setFoodList }) {
   const collectedFood = foodList.filter(f => f.status === "collected").length;
   const expiredFood = foodList.filter(f => new Date(f.expiryTime) < new Date() && f.status !== "collected").length;
   const totalUsers = users.length;
-  const pendingApprovals = users.filter(u => u.approval_status === "PENDING_APPROVAL").length;
-  const approvedUsers = users.filter(u => u.approval_status === "APPROVED").length;
+  const pendingApprovals = users.filter(u => (u.approval_status || u.approvalStatus) === "PENDING_APPROVAL").length;
+  const approvedUsers = users.filter(u => (u.approval_status || u.approvalStatus) === "APPROVED").length;
 
   // Remove expired/invalid entries
   const removeExpiredListings = () => {
@@ -72,7 +83,7 @@ function AdminDashboard({ foodList, setFoodList }) {
       
       if (response.data?.data || response.data?.success) {
         setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, approval_status: "APPROVED" } : user
+          user.id === userId ? { ...user, approval_status: "APPROVED", approvalStatus: "APPROVED" } : user
         ));
         showToast("User approved successfully! They can now access the platform.");
       }
@@ -92,7 +103,7 @@ function AdminDashboard({ foodList, setFoodList }) {
       
       if (response.data?.data || response.data?.success) {
         setUsers(prev => prev.map(user => 
-          user.id === userId ? { ...user, approval_status: "REJECTED" } : user
+          user.id === userId ? { ...user, approval_status: "REJECTED", approvalStatus: "REJECTED" } : user
         ));
         showToast("User registration rejected.", "warning");
       }
@@ -107,8 +118,9 @@ function AdminDashboard({ foodList, setFoodList }) {
   const toggleUserStatus = (userId) => {
     setUsers(prev => prev.map(user => {
       if (user.id === userId) {
-        const newStatus = user.approval_status === "APPROVED" ? "SUSPENDED" : "APPROVED";
-        return { ...user, approval_status: newStatus };
+        const currentStatus = user.approval_status || user.approvalStatus;
+        const newStatus = currentStatus === "APPROVED" ? "SUSPENDED" : "APPROVED";
+        return { ...user, approval_status: newStatus, approvalStatus: newStatus };
       }
       return user;
     }));
@@ -146,8 +158,12 @@ function AdminDashboard({ foodList, setFoodList }) {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Get pending users
-  const pendingUsers = users.filter(u => u.approval_status === "PENDING_APPROVAL");
+  // Get pending users (defensive filter - check both property names)
+  const pendingUsers = users.filter(u => {
+    const status = u.approval_status || u.approvalStatus;
+    console.log("🔍 User:", u.name, "| Status property:", status, "| Full user:", u);
+    return status === "PENDING_APPROVAL";
+  });
 
   const role = localStorage.getItem("role");
   if (role !== "admin") {
@@ -160,7 +176,7 @@ function AdminDashboard({ foodList, setFoodList }) {
 
   // Get status badge class
   const getStatusClass = (status) => {
-    // Handle both approval_status and approvalStatus for backward compatibility
+    // Get the actual status value (check both camelCase and snake_case)
     const statusValue = status || "";
     switch (statusValue) {
       case "APPROVED": return "approved";
@@ -208,9 +224,9 @@ function AdminDashboard({ foodList, setFoodList }) {
         border: "1px solid #ddd"
       }}>
         <div>📊 <strong>Users Loaded:</strong> {users.length}</div>
-        <div>⏳ <strong>Pending:</strong> {users.filter(u => u.approval_status === "PENDING_APPROVAL").length}</div>
-        <div>✅ <strong>Approved:</strong> {users.filter(u => u.approval_status === "APPROVED").length}</div>
-        <div>❌ <strong>Rejected:</strong> {users.filter(u => u.approval_status === "REJECTED").length}</div>
+        <div>⏳ <strong>Pending:</strong> {users.filter(u => (u.approval_status || u.approvalStatus) === "PENDING_APPROVAL").length}</div>
+        <div>✅ <strong>Approved:</strong> {users.filter(u => (u.approval_status || u.approvalStatus) === "APPROVED").length}</div>
+        <div>❌ <strong>Rejected:</strong> {users.filter(u => (u.approval_status || u.approvalStatus) === "REJECTED").length}</div>
         <div style={{marginTop: "8px", color: "#666"}}>
           Check browser console (F12) for detailed API response logs
         </div>
@@ -484,12 +500,12 @@ function AdminDashboard({ foodList, setFoodList }) {
                     <td><span className={`role-badge ${user.role}`}>{user.role}</span></td>
                     <td>{user.joinedDate}</td>
                     <td>
-                      <span className={`status-badge ${getStatusClass(user.approval_status)}`}>
-                        {formatStatus(user.approval_status)}
+                      <span className={`status-badge ${getStatusClass(user.approval_status || user.approvalStatus)}`}>
+                        {formatStatus(user.approval_status || user.approvalStatus)}
                       </span>
                     </td>
                     <td className="action-cell">
-                      {user.approval_status === "PENDING_APPROVAL" && (
+                      {(user.approval_status || user.approvalStatus) === "PENDING_APPROVAL" && (
                         <>
                           <button 
                             className="table-btn success"
@@ -505,7 +521,7 @@ function AdminDashboard({ foodList, setFoodList }) {
                           </button>
                         </>
                       )}
-                      {user.approval_status === "APPROVED" && (
+                      {(user.approval_status || user.approvalStatus) === "APPROVED" && (
                         <button 
                           className="table-btn warning"
                           onClick={() => toggleUserStatus(user.id)}
@@ -513,7 +529,7 @@ function AdminDashboard({ foodList, setFoodList }) {
                           Suspend
                         </button>
                       )}
-                      {user.approval_status === "SUSPENDED" && (
+                      {(user.approval_status || user.approvalStatus) === "SUSPENDED" && (
                         <button 
                           className="table-btn success"
                           onClick={() => toggleUserStatus(user.id)}
