@@ -1,39 +1,33 @@
 import { useState, useEffect } from "react";
+import { adminAPI } from "../services/api";
 import "../styles/adminDashboard.css";
 
 function AdminDashboard({ foodList, setFoodList }) {
-  // Load registered users from localStorage
-  const [users, setUsers] = useState(() => {
-    const registered = localStorage.getItem("registeredUsers");
-    const defaultUsers = [
-      { id: 1, name: "Hotel Grand", role: "giver", email: "hotel@example.com", approvalStatus: "APPROVED", joinedDate: "2026-01-10" },
-      { id: 2, name: "City NGO", role: "organization", email: "ngo@example.com", approvalStatus: "APPROVED", joinedDate: "2026-01-12" },
-      { id: 3, name: "Restaurant Hub", role: "giver", email: "restaurant@example.com", approvalStatus: "APPROVED", joinedDate: "2026-01-15" },
-      { id: 4, name: "Food Bank Trust", role: "organization", email: "foodbank@example.com", approvalStatus: "PENDING_APPROVAL", joinedDate: "2026-01-18" },
-    ];
-    
-    if (registered) {
-      const registeredUsers = JSON.parse(registered);
-      // Merge default users with registered users, avoiding duplicates
-      const allUsers = [...defaultUsers];
-      registeredUsers.forEach(regUser => {
-        if (!allUsers.find(u => u.email === regUser.email)) {
-          allUsers.push(regUser);
-        }
-      });
-      return allUsers;
-    }
-    return defaultUsers;
-  });
-
+  const [users, setUsers] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
   const [toast, setToast] = useState(null);
 
-  // Save users back to registeredUsers localStorage
+  // Load users from API
   useEffect(() => {
-    localStorage.setItem("registeredUsers", JSON.stringify(users));
-  }, [users]);
+    const loadUsers = async () => {
+      try {
+        setIsLoadingUsers(true);
+        const response = await adminAPI.getAllUsers();
+        const allUsers = response.data?.data || [];
+        setUsers(allUsers);
+      } catch (error) {
+        console.error("Failed to load users:", error);
+        setUsers([]);
+        showToast("Failed to load users", "error");
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    loadUsers();
+  }, []);
 
   // Show toast notification
   const showToast = (message, type = "success") => {
@@ -60,19 +54,35 @@ function AdminDashboard({ foodList, setFoodList }) {
   };
 
   // Approve user
-  const approveUser = (userId) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId ? { ...user, approvalStatus: "APPROVED" } : user
-    ));
-    showToast("User approved successfully! They can now access the platform.");
+  const approveUser = async (userId) => {
+    try {
+      const response = await adminAPI.approveUser(userId);
+      if (response.data?.data) {
+        setUsers(prev => prev.map(user => 
+          user.id === userId ? { ...user, approvalStatus: "APPROVED" } : user
+        ));
+        showToast("User approved successfully! They can now access the platform.");
+      }
+    } catch (error) {
+      console.error("Failed to approve user:", error);
+      showToast("Failed to approve user", "error");
+    }
   };
 
   // Reject user
-  const rejectUser = (userId) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId ? { ...user, approvalStatus: "REJECTED" } : user
-    ));
-    showToast("User registration rejected.", "warning");
+  const rejectUser = async (userId) => {
+    try {
+      const response = await adminAPI.rejectUser(userId);
+      if (response.data?.data) {
+        setUsers(prev => prev.map(user => 
+          user.id === userId ? { ...user, approvalStatus: "REJECTED" } : user
+        ));
+        showToast("User registration rejected.", "warning");
+      }
+    } catch (error) {
+      console.error("Failed to reject user:", error);
+      showToast("Failed to reject user", "error");
+    }
   };
 
   // Toggle user status (suspend/activate)
@@ -87,10 +97,16 @@ function AdminDashboard({ foodList, setFoodList }) {
   };
 
   // Delete user
-  const deleteUser = (userId) => {
+  const deleteUser = async (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
-      setUsers(prev => prev.filter(user => user.id !== userId));
-      showToast("User deleted successfully.", "warning");
+      try {
+        await adminAPI.deleteUser(userId);
+        setUsers(prev => prev.filter(user => user.id !== userId));
+        showToast("User deleted successfully.", "warning");
+      } catch (error) {
+        console.error("Failed to delete user:", error);
+        showToast("Failed to delete user", "error");
+      }
     }
   };
 
@@ -154,6 +170,7 @@ function AdminDashboard({ foodList, setFoodList }) {
       <div className="admin-header">
         <h1>🛡️ Admin Dashboard</h1>
         <p>Manage platform content, users, and approvals</p>
+        {isLoadingUsers && <p style={{fontSize: "14px", color: "#888", marginTop: "5px"}}>Loading users...</p>}
       </div>
 
       {/* Navigation Tabs */}
@@ -266,8 +283,7 @@ function AdminDashboard({ foodList, setFoodList }) {
       {/* User Approvals Tab */}
       {activeTab === "approvals" && (
         <div className="admin-content">
-          <div className="approvals-header">git branch
-
+          <div className="approvals-header">
             <h3>🔐 User Approval Requests</h3>
             <p>Review and approve new user registrations</p>
           </div>

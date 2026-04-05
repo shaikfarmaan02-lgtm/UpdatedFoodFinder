@@ -67,6 +67,7 @@ export const API_ENDPOINTS = {
   PENDING_USERS: '/admin/users/pending',
   APPROVE_USER: (id) => `/admin/users/${id}/approve`,
   REJECT_USER: (id) => `/admin/users/${id}/reject`,
+  DELETE_USER: (id) => `/admin/users/${id}`,
   USERS_LIST: '/admin/users',
   
   // Analytics endpoints
@@ -103,6 +104,7 @@ export const adminAPI = {
   getPendingUsers: () => apiClient.get(API_ENDPOINTS.PENDING_USERS),
   approveUser: (id) => apiClient.post(API_ENDPOINTS.APPROVE_USER(id)),
   rejectUser: (id) => apiClient.post(API_ENDPOINTS.REJECT_USER(id)),
+  deleteUser: (id) => apiClient.delete(API_ENDPOINTS.DELETE_USER(id)),
   getAllUsers: () => apiClient.get(API_ENDPOINTS.USERS_LIST),
 };
 
