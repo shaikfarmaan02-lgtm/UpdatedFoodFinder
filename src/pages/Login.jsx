@@ -47,16 +47,17 @@ function Login() {
           password,
           role: getRoleEnum("admin"),
         });
-        const userData = response.data?.data;
+        const user = response.data?.data;
         
-        if (!userData) {
+        if (!user) {
           alert("Login failed: Invalid response from server");
           setIsLoading(false);
           return;
         }
 
-        const { token, user } = userData;
+        const token = user.token || user.id;
         localStorage.setItem("authToken", token);
+        localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("role", "admin");
         localStorage.setItem("userId", user.id);
         localStorage.setItem("adminEmail", email);
@@ -79,15 +80,18 @@ function Login() {
           email,
           password,
           role: getRoleEnum("analyst"),
-        });        const userData = response.data?.data;
+        });
+        const user = response.data?.data;
         
-        if (!userData) {
+        if (!user) {
           alert("Login failed: Invalid response from server");
           setIsLoading(false);
           return;
         }
-        const { token, user } = response.data;
+
+        const token = user.token || user.id;
         localStorage.setItem("authToken", token);
+        localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("role", "analyst");
         localStorage.setItem("userId", user.id);
         localStorage.setItem("analystName", name);
@@ -111,16 +115,17 @@ function Login() {
           password,
           role: getRoleEnum("giver"),
         });
-        const userData = response.data?.data;
+        const user = response.data?.data;
         
-        if (!userData) {
+        if (!user) {
           alert("Login failed: Invalid response from server");
           setIsLoading(false);
           return;
         }
 
-        const { token, user } = userData;
+        const token = user.token || user.id;
         localStorage.setItem("authToken", token);
+        localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("role", "giver");
         localStorage.setItem("userId", user.id);
         localStorage.setItem("giverName", user.name || "");
@@ -151,16 +156,17 @@ function Login() {
           password,
           role: getRoleEnum("finder"),
         });
-        const userData = response.data?.data;
+        const user = response.data?.data;
         
-        if (!userData) {
+        if (!user) {
           alert("Login failed: Invalid response from server");
           setIsLoading(false);
           return;
         }
 
-        const { token, user } = userData;
+        const token = user.token || user.id;
         localStorage.setItem("authToken", token);
+        localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("role", "finder");
         localStorage.setItem("userId", user.id);
         localStorage.setItem("approvalStatus", "APPROVED");
@@ -184,16 +190,17 @@ function Login() {
           password,
           role: getRoleEnum("organization"),
         });
-        const userData = response.data?.data;
+        const user = response.data?.data;
         
-        if (!userData) {
+        if (!user) {
           alert("Login failed: Invalid response from server");
           setIsLoading(false);
           return;
         }
 
-        const { token, user } = userData;
+        const token = user.token || user.id;
         localStorage.setItem("authToken", token);
+        localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("role", "organization");
         localStorage.setItem("userId", user.id);
         localStorage.setItem("orgName", user.name || "");

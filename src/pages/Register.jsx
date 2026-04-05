@@ -87,11 +87,16 @@ function Register() {
       // Call registration API
       const response = await userAPI.register(userData);
       
-      if (!response.data?.data) {
+      const registeredUser = response.data?.data;
+      
+      if (!registeredUser) {
         alert("Registration failed: Invalid response from server");
         setIsSubmitting(false);
         return;
       }
+
+      // Store registered user data
+      localStorage.setItem("user", JSON.stringify(registeredUser));
 
       // Show appropriate message based on role
       if (selectedRole === "finder") {
