@@ -47,7 +47,15 @@ function Login() {
           password,
           role: getRoleEnum("admin"),
         });
-        const { token, user } = response.data;
+        const userData = response.data?.data;
+        
+        if (!userData) {
+          alert("Login failed: Invalid response from server");
+          setIsLoading(false);
+          return;
+        }
+
+        const { token, user } = userData;
         localStorage.setItem("authToken", token);
         localStorage.setItem("role", "admin");
         localStorage.setItem("userId", user.id);
@@ -71,7 +79,13 @@ function Login() {
           email,
           password,
           role: getRoleEnum("analyst"),
-        });
+        });        const userData = response.data?.data;
+        
+        if (!userData) {
+          alert("Login failed: Invalid response from server");
+          setIsLoading(false);
+          return;
+        }
         const { token, user } = response.data;
         localStorage.setItem("authToken", token);
         localStorage.setItem("role", "analyst");
@@ -97,12 +111,20 @@ function Login() {
           password,
           role: getRoleEnum("giver"),
         });
-        const { token, user } = response.data;
+        const userData = response.data?.data;
+        
+        if (!userData) {
+          alert("Login failed: Invalid response from server");
+          setIsLoading(false);
+          return;
+        }
+
+        const { token, user } = userData;
         localStorage.setItem("authToken", token);
         localStorage.setItem("role", "giver");
         localStorage.setItem("userId", user.id);
-        localStorage.setItem("giverName", name);
-        localStorage.setItem("giverContact", phone);
+        localStorage.setItem("giverName", user.name || "");
+        localStorage.setItem("giverContact", user.phone || "");
         localStorage.setItem("giverAddress", user?.address || "");
         localStorage.setItem("approvalStatus", user.approvalStatus || "APPROVED");
         localStorage.setItem("userEmail", user?.email || email);
@@ -129,13 +151,21 @@ function Login() {
           password,
           role: getRoleEnum("finder"),
         });
-        const { token, user } = response.data;
+        const userData = response.data?.data;
+        
+        if (!userData) {
+          alert("Login failed: Invalid response from server");
+          setIsLoading(false);
+          return;
+        }
+
+        const { token, user } = userData;
         localStorage.setItem("authToken", token);
         localStorage.setItem("role", "finder");
         localStorage.setItem("userId", user.id);
         localStorage.setItem("approvalStatus", "APPROVED");
-        localStorage.setItem("finderName", name);
-        localStorage.setItem("finderPhone", phone);
+        localStorage.setItem("finderName", user.name || "");
+        localStorage.setItem("finderPhone", user.phone || "");
         alert("Logged in as Food Finder");
         window.dispatchEvent(new Event("storage"));
         navigate("/find-food");
@@ -154,11 +184,19 @@ function Login() {
           password,
           role: getRoleEnum("organization"),
         });
-        const { token, user } = response.data;
+        const userData = response.data?.data;
+        
+        if (!userData) {
+          alert("Login failed: Invalid response from server");
+          setIsLoading(false);
+          return;
+        }
+
+        const { token, user } = userData;
         localStorage.setItem("authToken", token);
         localStorage.setItem("role", "organization");
         localStorage.setItem("userId", user.id);
-        localStorage.setItem("orgName", orgName);
+        localStorage.setItem("orgName", user.name || "");
         localStorage.setItem("orgEmail", email);
         localStorage.setItem("approvalStatus", user.approvalStatus || "APPROVED");
         window.dispatchEvent(new Event("storage"));
