@@ -64,11 +64,11 @@ export const API_ENDPOINTS = {
   REJECT_REQUEST: (id) => `/requests/${id}/reject`,
   
   // Admin endpoints
-  PENDING_USERS: '/admin/users/pending',
-  APPROVE_USER: (id) => `/admin/users/${id}/approve`,
-  REJECT_USER: (id) => `/admin/users/${id}/reject`,
-  DELETE_USER: (id) => `/admin/users/${id}`,
-  USERS_LIST: '/admin/users',
+  PENDING_USERS: '/users',
+  APPROVE_USER: (id) => `/users/${id}/approve`,
+  REJECT_USER: (id) => `/users/${id}/reject`,
+  DELETE_USER: (id) => `/users/${id}`,
+  USERS_LIST: '/users',
   
   // Analytics endpoints
   ANALYTICS: '/analytics',
