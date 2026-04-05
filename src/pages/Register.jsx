@@ -22,6 +22,16 @@ function Register() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Map frontend role values to backend enum values
+  const getRoleEnum = (role) => {
+    const roleMap = {
+      giver: "DONOR",
+      organization: "NGO",
+      finder: "DONOR", // Receiver can register as DONOR initially
+    };
+    return roleMap[role] || role.toUpperCase();
+  };
+
   const handleRegister = async () => {
     if (!selectedRole) {
       alert("Please select a role");
@@ -52,9 +62,12 @@ function Register() {
     }
 
     try {
+      // Convert frontend role to backend enum value
+      const backendRole = getRoleEnum(selectedRole);
+
       // Prepare registration data
       const userData = {
-        role: selectedRole,
+        role: backendRole,
         email: formData.email || `${formData.name.toLowerCase().replace(/\s/g, "")}@user.com`,
         phone: formData.phone,
         address: formData.address,

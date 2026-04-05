@@ -13,6 +13,18 @@ function Login() {
   const [orgName, setOrgName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Map frontend role values to backend enum values
+  const getRoleEnum = (role) => {
+    const roleMap = {
+      giver: "DONOR",
+      organization: "NGO",
+      finder: "DONOR",
+      admin: "ADMIN",
+      analyst: "ADMIN", // Analyst can use ADMIN enum or create separate type if backend supports
+    };
+    return roleMap[role] || role.toUpperCase();
+  };
+
   const handleLogin = async () => {
     if (!selectedRole) {
       alert("Please select a role");
@@ -31,7 +43,7 @@ function Login() {
         }
         const response = await userAPI.login({
           email,
-          role: "admin",
+          role: getRoleEnum("admin"),
         });
         const { token, user } = response.data;
         localStorage.setItem("authToken", token);
@@ -55,7 +67,7 @@ function Login() {
         const response = await userAPI.login({
           name,
           email,
-          role: "analyst",
+          role: getRoleEnum("analyst"),
         });
         const { token, user } = response.data;
         localStorage.setItem("authToken", token);
@@ -80,7 +92,7 @@ function Login() {
         const response = await userAPI.login({
           name,
           phone,
-          role: "giver",
+          role: getRoleEnum("giver"),
         });
         const { token, user } = response.data;
         localStorage.setItem("authToken", token);
@@ -112,7 +124,7 @@ function Login() {
         const response = await userAPI.login({
           name,
           phone,
-          role: "finder",
+          role: getRoleEnum("finder"),
         });
         const { token, user } = response.data;
         localStorage.setItem("authToken", token);
@@ -137,7 +149,7 @@ function Login() {
         const response = await userAPI.login({
           name: orgName,
           email,
-          role: "organization",
+          role: getRoleEnum("organization"),
         });
         const { token, user } = response.data;
         localStorage.setItem("authToken", token);

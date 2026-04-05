@@ -3,6 +3,27 @@ import axios from 'axios';
 // Production backend URL
 const API_BASE_URL = 'https://foodfinder-backend-pbsi.onrender.com/api';
 
+// Role enum mapping from frontend to backend
+export const ROLE_ENUM = {
+  DONOR: "DONOR",
+  NGO: "NGO",
+  ADMIN: "ADMIN",
+};
+
+// Map frontend role values to backend enum
+export const mapRoleToEnum = (role) => {
+  const roleMap = {
+    giver: ROLE_ENUM.DONOR,
+    organization: ROLE_ENUM.NGO,
+    finder: ROLE_ENUM.DONOR,
+    admin: ROLE_ENUM.ADMIN,
+    analyst: ROLE_ENUM.ADMIN,
+    donor: ROLE_ENUM.DONOR,
+    ngo: ROLE_ENUM.NGO,
+  };
+  return roleMap[role?.toLowerCase()] || role?.toUpperCase();
+};
+
 // Create axios instance with base URL
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
