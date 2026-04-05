@@ -87,14 +87,13 @@ function Login() {
 
       // Donor login
       if (selectedRole === "giver") {
-        if (!name || !phone || !password) {
-          alert("Please enter name, phone number and password");
+        if (!email || !password) {
+          alert("Please enter email and password");
           setIsLoading(false);
           return;
         }
         const response = await userAPI.login({
-          name,
-          phone,
+          email,
           password,
           role: getRoleEnum("giver"),
         });
@@ -120,14 +119,13 @@ function Login() {
 
       // Finder (Receiver) login - auto approved but requires name & phone
       if (selectedRole === "finder") {
-        if (!name || !phone || !password) {
-          alert("Please enter your name, phone number and password");
+        if (!email || !password) {
+          alert("Please enter email and password");
           setIsLoading(false);
           return;
         }
         const response = await userAPI.login({
-          name,
-          phone,
+          email,
           password,
           role: getRoleEnum("finder"),
         });
@@ -146,13 +144,12 @@ function Login() {
 
       // Organization login
       if (selectedRole === "organization") {
-        if (!orgName || !email || !password) {
-          alert("Please enter organization name, email and password");
+        if (!email || !password) {
+          alert("Please enter organization email and password");
           setIsLoading(false);
           return;
         }
         const response = await userAPI.login({
-          name: orgName,
           email,
           password,
           role: getRoleEnum("organization"),
@@ -238,22 +235,12 @@ function Login() {
         {selectedRole === "giver" && (
           <div className="auth-form">
             <div className="form-group">
-              <label>Your Name</label>
+              <label>Email Address</label>
               <input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Phone Number</label>
-              <input
-                type="tel"
-                placeholder="Enter phone number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                type="email"
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -274,22 +261,12 @@ function Login() {
         {selectedRole === "finder" && (
           <div className="auth-form">
             <div className="form-group">
-              <label>Your Name *</label>
+              <label>Email Address *</label>
               <input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Phone Number *</label>
-              <input
-                type="tel"
-                placeholder="Enter phone number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                type="email"
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -313,20 +290,10 @@ function Login() {
         {selectedRole === "organization" && (
           <div className="auth-form">
             <div className="form-group">
-              <label>Organization Name</label>
-              <input
-                type="text"
-                placeholder="Enter organization name"
-                value={orgName}
-                onChange={(e) => setOrgName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Email Address</label>
+              <label>Organization Email</label>
               <input
                 type="email"
-                placeholder="Enter email address"
+                placeholder="Enter organization email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

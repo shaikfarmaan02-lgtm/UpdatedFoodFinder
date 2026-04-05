@@ -43,20 +43,20 @@ function Register() {
 
     // Validate based on role
     if (selectedRole === "giver") {
-      if (!formData.name || !formData.phone || !formData.email || !formData.address || !formData.password) {
+      if (!formData.name || !formData.email || !formData.password || !formData.address) {
         alert("Please fill in all required fields");
         setIsSubmitting(false);
         return;
       }
     } else if (selectedRole === "organization") {
-      if (!formData.orgName || !formData.email || !formData.phone || !formData.address || !formData.password) {
+      if (!formData.orgName || !formData.email || !formData.password || !formData.address) {
         alert("Please fill in all required fields");
         setIsSubmitting(false);
         return;
       }
     } else if (selectedRole === "finder") {
-      if (!formData.name || !formData.password) {
-        alert("Please enter your name and password");
+      if (!formData.name || !formData.email || !formData.password) {
+        alert("Please enter your name, email and password");
         setIsSubmitting(false);
         return;
       }
@@ -70,7 +70,7 @@ function Register() {
       const userData = {
         role: backendRole,
         name: "",
-        email: formData.email || `${formData.name.toLowerCase().replace(/\s/g, "")}@user.com`,
+        email: formData.email,
         password: formData.password,
         phone: formData.phone,
         address: formData.address,
@@ -318,23 +318,14 @@ function Register() {
               />
             </div>
             <div className="form-group">
-              <label>Email (Optional)</label>
+              <label>Email Address *</label>
               <input
                 type="email"
                 name="email"
                 placeholder="Enter email address"
                 value={formData.email}
                 onChange={handleInputChange}
-              />
-            </div>
-            <div className="form-group">
-              <label>Phone (Optional)</label>
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Enter phone number"
-                value={formData.phone}
-                onChange={handleInputChange}
+                required
               />
             </div>
             <div className="info-box success">
